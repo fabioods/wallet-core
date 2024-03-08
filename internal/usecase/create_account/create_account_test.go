@@ -2,6 +2,8 @@ package create_account
 
 import (
 	"github.com/fabioods/fc-ms-wallet/internal/entity"
+	"github.com/fabioods/fc-ms-wallet/internal/event"
+	"github.com/fabioods/fc-ms-wallet/pkg/events"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -46,7 +48,10 @@ func TestCreateAccountUseCase(t *testing.T) {
 	accountMock := &AccountGatewayMock{}
 	accountMock.On("Save", mock.Anything).Return(nil)
 
-	uc := NewCreateAccountUseCase(accountMock, clientMock)
+	dispatch := events.NewEventDispatcher()
+	transactionEvent := event.NewTransactionCreated()
+
+	uc := NewCreateAccountUseCase(accountMock, clientMock, transactionEvent, dispatch)
 
 	inputDto := CreateAccountInputDto{
 		ClientId: client.ID,
