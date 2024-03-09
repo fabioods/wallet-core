@@ -3,6 +3,8 @@ module github.com/fabioods/fc-ms-wallet
 go 1.21
 
 require (
+	github.com/go-chi/chi/v5 v5.0.12
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/google/uuid v1.5.0
 	github.com/stretchr/testify v1.8.4
 )

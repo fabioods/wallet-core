@@ -1,0 +1,22 @@
+version: '3'
+services:
+  mysql:
+    image: mysql
+    restart: always
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wallet
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_wallet:/var/lib/mysql
+    networks:
+      - wallet
+volumes:
+  mysql_wallet:
+networks:
+    wallet:
+        driver: bridge
+
+

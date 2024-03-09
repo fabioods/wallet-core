@@ -1,6 +1,7 @@
 package create_client
 
 import (
+	"fmt"
 	"github.com/fabioods/fc-ms-wallet/internal/entity"
 	"github.com/fabioods/fc-ms-wallet/internal/gateway"
 	"time"
@@ -35,6 +36,7 @@ func (uc *UseCase) Execute(input InputDTO) (*OutputDTO, error) {
 	err = uc.ClientGateway.Save(client)
 
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
