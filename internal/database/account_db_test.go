@@ -56,3 +56,7 @@ func (s *AccountDBTestSuite) TestFindByID() {
 	s.Equal(account.Client.Name, accountDB.Client.Name)
 	s.Equal(account.Client.Email, accountDB.Client.Email)
 }
+
+func (s *AccountDBTestSuite) TestUpdateBalance() {
+	
+}

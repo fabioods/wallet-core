@@ -1,15 +1,16 @@
 package create_transaction
 
 import (
+	"fmt"
 	"github.com/fabioods/fc-ms-wallet/internal/entity"
 	"github.com/fabioods/fc-ms-wallet/internal/gateway"
 	"github.com/fabioods/fc-ms-wallet/pkg/events"
 )
 
 type CreateTransactionInputDto struct {
-	AccountIdFrom string
-	AccountIdTo   string
-	Amount        float64
+	AccountIdFrom string  `json:"account_id_from"`
+	AccountIdTo   string  `json:"account_id_to"`
+	Amount        float64 `json:"amount"`
 }
 
 type CreateTransactionOutputDto struct {
@@ -36,20 +37,37 @@ func NewCreateTransactionUseCase(tg gateway.TransactionGateway, ag gateway.Accou
 func (uc *CreateTransactionUseCase) Execute(input CreateTransactionInputDto) (*CreateTransactionOutputDto, error) {
 	accountFrom, err := uc.AccountGateway.FindByID(input.AccountIdFrom)
 	if err != nil {
+		fmt.Println("Error to find account from")
 		return nil, err
 	}
 	accountTo, err := uc.AccountGateway.FindByID(input.AccountIdTo)
 	if err != nil {
+		fmt.Println("Error to find account to")
 		return nil, err
 	}
 	transaction, err := entity.NewTransaction(accountFrom, accountTo, input.Amount)
 
 	if err != nil {
+		fmt.Println("Error to create transaction")
 		return nil, err
 	}
+
+	err = uc.AccountGateway.UpdateBalance(accountFrom)
+	if err != nil {
+		fmt.Println("Error to update account from")
+		return nil, err
+	}
+
+	err = uc.AccountGateway.UpdateBalance(accountTo)
+	if err != nil {
+		fmt.Println("Error to update account to")
+		return nil, err
+	}
+
 	err = uc.TransactionGateway.Create(transaction)
 
 	if err != nil {
+		fmt.Println("Error to execute transaction")
 		return nil, err
 	}
 
@@ -58,6 +76,7 @@ func (uc *CreateTransactionUseCase) Execute(input CreateTransactionInputDto) (*C
 	uc.TransactionCreated.SetPayload(output)
 	err = uc.EventsDispatcher.Dispatch(uc.TransactionCreated)
 	if err != nil {
+		fmt.Println("Error to dispatch transaction created")
 		return nil, err
 	}
 

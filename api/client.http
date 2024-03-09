@@ -5,3 +5,31 @@ Content-Type: application/json
     "name": "Client 1",
     "email": "client@gmail.com"
 }
+
+####
+POST http://localhost:8080/clients HTTP/1.1
+Content-Type: application/json
+
+{
+"name": "Client 2",
+"email": "client2@gmail.com"
+}
+
+####
+POST http://localhost:8080/accounts HTTP/1.1
+Content-Type: application/json
+
+{
+  "client_id": "2eb65a02-5767-41f9-a2e6-dedd0d4c6d28"
+}
+
+
+####
+POST http://localhost:8080/transactions HTTP/1.1
+Content-Type: application/json
+
+{
+  "account_id_from": "56e5906a-8b5a-4c44-8dd1-e9620ad9d6d5",
+  "account_id_to": "cc3f5ede-2065-4a36-86d6-a7b92f1540b8",
+  "amount": 50
+}

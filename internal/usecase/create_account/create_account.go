@@ -6,11 +6,11 @@ import (
 )
 
 type CreateAccountInputDto struct {
-	ClientId string
+	ClientId string `json:"client_id"`
 }
 
 type CreateAccountOutputDto struct {
-	Id string
+	Id string `json:"id"`
 }
 
 // variaveis da injeção de dependencia

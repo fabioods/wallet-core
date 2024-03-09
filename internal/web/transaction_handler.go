@@ -27,6 +27,7 @@ func (t *TransactionHandlerWeb) CreateTransactionHandlerWeb(w http.ResponseWrite
 	output, err := t.CreateTransactionUseCase.Execute(dto)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -34,6 +35,7 @@ func (t *TransactionHandlerWeb) CreateTransactionHandlerWeb(w http.ResponseWrite
 	err = json.NewEncoder(w).Encode(output)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
