@@ -1,34 +1,15 @@
 package create_transaction
 
 import (
+	"context"
 	"github.com/fabioods/fc-ms-wallet/internal/entity"
+	"github.com/fabioods/fc-ms-wallet/internal/event"
+	"github.com/fabioods/fc-ms-wallet/internal/usecase/mocks"
+	"github.com/fabioods/fc-ms-wallet/pkg/events"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )
-
-type AccountGatewayMock struct {
-	mock.Mock
-}
-
-func (m *AccountGatewayMock) FindById(id string) (*entity.Account, error) {
-	args := m.Called(id)
-	return args.Get(0).(*entity.Account), args.Error(1)
-}
-
-func (m *AccountGatewayMock) Save(account *entity.Account) error {
-	args := m.Called(account)
-	return args.Error(0)
-}
-
-type TransactionGatewayMock struct {
-	mock.Mock
-}
-
-func (m *TransactionGatewayMock) Create(transaction *entity.Transaction) error {
-	args := m.Called(transaction)
-	return args.Error(0)
-}
 
 func TestCreateTransactionUseCase(t *testing.T) {
 	client1, _ := entity.NewClient("Rafa", "rafa@example.com")
@@ -38,12 +19,8 @@ func TestCreateTransactionUseCase(t *testing.T) {
 	account2, _ := entity.NewAccount(client2)
 	account2.Credit(500)
 
-	mockAccount := &AccountGatewayMock{}
-	mockAccount.On("FindById", account1.ID).Return(account1, nil)
-	mockAccount.On("FindById", account2.ID).Return(account2, nil)
-
-	mockTransaction := &TransactionGatewayMock{}
-	mockTransaction.On("Create", mock.Anything).Return(nil)
+	mockUow := &mocks.UowMock{}
+	mockUow.On("Do", mock.Anything, mock.Anything).Return(nil)
 
 	inputDto := CreateTransactionInputDto{
 		AccountIdFrom: account1.ID,
@@ -51,14 +28,16 @@ func TestCreateTransactionUseCase(t *testing.T) {
 		Amount:        100,
 	}
 
-	uc := NewCreateTransactionUseCase(mockTransaction, mockAccount)
+	dispatcher := events.NewEventDispatcher()
+	eventTransaction := event.NewTransactionCreated()
+	ctx := context.Background()
 
-	output, err := uc.Execute(inputDto)
+	uc := NewCreateTransactionUseCase(mockUow, eventTransaction, dispatcher)
+
+	output, err := uc.Execute(ctx, inputDto)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, output)
-	mockAccount.AssertExpectations(t)
-	mockTransaction.AssertExpectations(t)
-	mockAccount.AssertNumberOfCalls(t, "FindById", 2)
-	mockTransaction.AssertNumberOfCalls(t, "Create", 1)
+	mockUow.AssertExpectations(t)
+	mockUow.AssertNumberOfCalls(t, "Do", 1)
 }

@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"github.com/fabioods/fc-ms-wallet/internal/entity"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -58,5 +59,5 @@ func (s *AccountDBTestSuite) TestFindByID() {
 }
 
 func (s *AccountDBTestSuite) TestUpdateBalance() {
-	
+
 }

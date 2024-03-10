@@ -31,5 +31,5 @@ Content-Type: application/json
 {
   "account_id_from": "56e5906a-8b5a-4c44-8dd1-e9620ad9d6d5",
   "account_id_to": "cc3f5ede-2065-4a36-86d6-a7b92f1540b8",
-  "amount": 50
+  "amount": 20
 }

@@ -18,13 +18,14 @@ func NewTransactionHandlerWeb(createTransactionUseCase create_transaction.Create
 
 func (t *TransactionHandlerWeb) CreateTransactionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	var dto create_transaction.CreateTransactionInputDto
+	ctx := r.Context()
 	err := json.NewDecoder(r.Body).Decode(&dto)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	output, err := t.CreateTransactionUseCase.Execute(dto)
+	output, err := t.CreateTransactionUseCase.Execute(ctx, dto)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))

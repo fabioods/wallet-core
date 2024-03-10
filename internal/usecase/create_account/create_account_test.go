@@ -2,8 +2,7 @@ package create_account
 
 import (
 	"github.com/fabioods/fc-ms-wallet/internal/entity"
-	"github.com/fabioods/fc-ms-wallet/internal/event"
-	"github.com/fabioods/fc-ms-wallet/pkg/events"
+	"github.com/fabioods/fc-ms-wallet/internal/usecase/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -23,20 +22,6 @@ func (m *ClientGatewayMock) Save(client *entity.Client) error {
 	return args.Error(0)
 }
 
-type AccountGatewayMock struct {
-	mock.Mock
-}
-
-func (m *AccountGatewayMock) FindById(id string) (*entity.Account, error) {
-	args := m.Called(id)
-	return args.Get(0).(*entity.Account), args.Error(1)
-}
-
-func (m *AccountGatewayMock) Save(account *entity.Account) error {
-	args := m.Called(account)
-	return args.Error(0)
-}
-
 func TestCreateAccountUseCase(t *testing.T) {
 	client, _ := entity.NewClient("Rafa", "rafa@example.com")
 	clientMock := &ClientGatewayMock{}
@@ -45,13 +30,10 @@ func TestCreateAccountUseCase(t *testing.T) {
 	//como não retorna o account criado, não tem como comparar o id
 	//account := entity.NewAccount(client)
 
-	accountMock := &AccountGatewayMock{}
+	accountMock := &mocks.AccountGatewayMock{}
 	accountMock.On("Save", mock.Anything).Return(nil)
 
-	dispatch := events.NewEventDispatcher()
-	transactionEvent := event.NewTransactionCreated()
-
-	uc := NewCreateAccountUseCase(accountMock, clientMock, transactionEvent, dispatch)
+	uc := NewCreateAccountUseCase(accountMock, clientMock)
 
 	inputDto := CreateAccountInputDto{
 		ClientId: client.ID,
