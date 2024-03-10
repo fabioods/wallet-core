@@ -83,6 +83,7 @@ func (uc *CreateTransactionUseCase) Execute(ctx context.Context, input CreateTra
 
 	})
 	uc.TransactionCreated.SetPayload(output)
+	fmt.Println("Dispatching transaction created", uc.TransactionCreated.GetName())
 	err = uc.EventsDispatcher.Dispatch(uc.TransactionCreated)
 	if err != nil {
 		fmt.Println("Error to dispatch transaction created")

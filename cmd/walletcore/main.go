@@ -4,21 +4,24 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/fabioods/fc-ms-wallet/internal/database"
 	"github.com/fabioods/fc-ms-wallet/internal/event"
+	"github.com/fabioods/fc-ms-wallet/internal/event/handler"
 	"github.com/fabioods/fc-ms-wallet/internal/usecase/create_account"
 	"github.com/fabioods/fc-ms-wallet/internal/usecase/create_client"
 	"github.com/fabioods/fc-ms-wallet/internal/usecase/create_transaction"
 	"github.com/fabioods/fc-ms-wallet/internal/web"
 	"github.com/fabioods/fc-ms-wallet/internal/web/webserver"
 	"github.com/fabioods/fc-ms-wallet/pkg/events"
+	"github.com/fabioods/fc-ms-wallet/pkg/kafka"
 	"github.com/fabioods/fc-ms-wallet/pkg/uow"
 	_ "github.com/go-sql-driver/mysql"
 	"net/http"
 )
 
 func main() {
-	db, err := sql.Open("mysql", fmt.Sprintf("root:root@tcp(localhost:3306)/wallet?parseTime=true"))
+	db, err := sql.Open("mysql", fmt.Sprintf("root:root@tcp(mysql:3306)/wallet?parseTime=true"))
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -31,8 +34,14 @@ func main() {
 		panic(err)
 	}
 
+	configMap := ckafka.ConfigMap{
+		"bootstrap.servers": "kafka:29092",
+		"group.id":          "wallet",
+	}
+	kafkaProducer := kafka.NewKafkaProducer(&configMap)
+
 	eventDispatcher := events.NewEventDispatcher()
-	//eventDispatcher.Register("TransactionCreated", handlerTransactionCreated)
+	eventDispatcher.Register("transaction_created", handler.NewTransactionCreatedKafka(kafkaProducer))
 	transactionCreatedEvent := event.NewTransactionCreated()
 
 	clientDB := database.NewClientDB(db)
@@ -67,11 +76,11 @@ func main() {
 		w.Write([]byte("pong"))
 	})
 
-	fmt.Println("Server started on port 8080")
 	err = webServer.Start()
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Server started on port 8080")
 	// Create table transactions (id varchar(255), account_id_from varchar(255), account_id_to varchar(255), amount int, created_at date)
 	// Create table accounts (id varchar(255), client_id varchar(255), balance int, created_at date)
 	// Create table clients (id varchar(255), name varchar(255), email varchar(255), created_at date)

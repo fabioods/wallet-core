@@ -3,6 +3,7 @@ package events
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"sync"
 	"testing"
 	"time"
 
@@ -34,9 +35,7 @@ type TestEventHandler struct {
 	ID int
 }
 
-func (t *TestEventHandler) Handle(event EventInterface) error {
-	return nil
-}
+func (t *TestEventHandler) Handle(event EventInterface, wg *sync.WaitGroup) {}
 
 type EventDispatcherTestSuite struct {
 	suite.Suite
@@ -117,9 +116,9 @@ type MockHandler struct {
 	mock.Mock
 }
 
-func (m *MockHandler) Handle(event EventInterface) error {
-	args := m.Called(event)
-	return args.Error(0)
+func (m *MockHandler) Handle(event EventInterface, wg *sync.WaitGroup) {
+	m.Called(event)
+	wg.Done()
 }
 
 func (suite *EventDispatcherTestSuite) TestEventDispatcher_Dispatch() {
