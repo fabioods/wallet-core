@@ -33,3 +33,7 @@ Content-Type: application/json
   "account_id_to": "cc3f5ede-2065-4a36-86d6-a7b92f1540b8",
   "amount": 1
 }
+
+###
+POST http://localhost:8080/ping HTTP/1.1
+

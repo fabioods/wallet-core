@@ -22,23 +22,33 @@ type CreateTransactionOutputDto struct {
 	Amount      float64 `json:"amount"`
 }
 
+type BalanceUpdatedOutputDTO struct {
+	AccountIDFrom        string  `json:"account_id_from"`
+	AccountIDTo          string  `json:"account_id_to"`
+	BalanceAccountIDFrom float64 `json:"balance_account_id_from"`
+	BalanceAccountIDTo   float64 `json:"balance_account_id_to"`
+}
+
 // variaveis para DI
 type CreateTransactionUseCase struct {
 	UnitOfWork         uow.UowInterface
 	TransactionCreated events.EventInterface
+	BalanceUpdated     events.EventInterface
 	EventsDispatcher   events.EventDispatcherInterface
 }
 
-func NewCreateTransactionUseCase(uow uow.UowInterface, tc events.EventInterface, ed events.EventDispatcherInterface) *CreateTransactionUseCase {
+func NewCreateTransactionUseCase(uow uow.UowInterface, tc events.EventInterface, bu events.EventInterface, ed events.EventDispatcherInterface) *CreateTransactionUseCase {
 	return &CreateTransactionUseCase{
 		UnitOfWork:         uow,
 		TransactionCreated: tc,
 		EventsDispatcher:   ed,
+		BalanceUpdated:     bu,
 	}
 }
 
 func (uc *CreateTransactionUseCase) Execute(ctx context.Context, input CreateTransactionInputDto) (*CreateTransactionOutputDto, error) {
 	output := &CreateTransactionOutputDto{}
+	balanceUpdatedOutputDTO := BalanceUpdatedOutputDTO{}
 	err := uc.UnitOfWork.Do(ctx, func(uow *uow.Uow) error {
 		accountFrom, err := uc.getAccountRepository(ctx).FindByID(input.AccountIdFrom)
 		if err != nil {
@@ -79,15 +89,27 @@ func (uc *CreateTransactionUseCase) Execute(ctx context.Context, input CreateTra
 		output.AccountFrom = transaction.AccountFrom.ID
 		output.AccountTo = transaction.AccountTo.ID
 		output.Amount = transaction.Amount
+
+		balanceUpdatedOutputDTO.AccountIDFrom = input.AccountIdFrom
+		balanceUpdatedOutputDTO.AccountIDTo = input.AccountIdTo
+		balanceUpdatedOutputDTO.BalanceAccountIDFrom = accountFrom.Balance
+		balanceUpdatedOutputDTO.BalanceAccountIDTo = accountTo.Balance
 		return nil
 
 	})
 	uc.TransactionCreated.SetPayload(output)
-	fmt.Println("Dispatching transaction created", uc.TransactionCreated.GetName())
 	err = uc.EventsDispatcher.Dispatch(uc.TransactionCreated)
 	if err != nil {
 		fmt.Println("Error to dispatch transaction created")
 		return nil, err
+	}
+
+	uc.BalanceUpdated.SetPayload(balanceUpdatedOutputDTO)
+	err = uc.EventsDispatcher.Dispatch(uc.BalanceUpdated)
+	if err != nil {
+		fmt.Println("Error to dispatch balance updated")
+		return nil, err
+
 	}
 
 	return output, nil

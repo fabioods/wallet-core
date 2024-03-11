@@ -42,7 +42,9 @@ func main() {
 
 	eventDispatcher := events.NewEventDispatcher()
 	eventDispatcher.Register("transaction_created", handler.NewTransactionCreatedKafka(kafkaProducer))
+	eventDispatcher.Register("balance_updated", handler.NewBalanceUpdatedKafka(kafkaProducer))
 	transactionCreatedEvent := event.NewTransactionCreated()
+	balanceUpdatedEvent := event.NewBalanceUpdated()
 
 	clientDB := database.NewClientDB(db)
 	accountDB := database.NewAccountDB(db)
@@ -60,7 +62,7 @@ func main() {
 
 	createClientUseCase := create_client.NewCreateClientUseCase(clientDB)
 	createAccountUseCase := create_account.NewCreateAccountUseCase(accountDB, clientDB)
-	createTransactionUseCase := create_transaction.NewCreateTransactionUseCase(unitOfWork, transactionCreatedEvent, eventDispatcher)
+	createTransactionUseCase := create_transaction.NewCreateTransactionUseCase(unitOfWork, transactionCreatedEvent, balanceUpdatedEvent, eventDispatcher)
 
 	webServer := webserver.NewWebServer(":8080")
 
@@ -76,11 +78,11 @@ func main() {
 		w.Write([]byte("pong"))
 	})
 
+	fmt.Println("Server started on port 8080")
 	err = webServer.Start()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Server started on port 8080")
 	// Create table transactions (id varchar(255), account_id_from varchar(255), account_id_to varchar(255), amount int, created_at date)
 	// Create table accounts (id varchar(255), client_id varchar(255), balance int, created_at date)
 	// Create table clients (id varchar(255), name varchar(255), email varchar(255), created_at date)
