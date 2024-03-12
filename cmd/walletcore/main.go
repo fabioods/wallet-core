@@ -4,14 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/fabioods/fc-ms-wallet/internal/database"
 	"github.com/fabioods/fc-ms-wallet/internal/event"
+	"github.com/fabioods/fc-ms-wallet/internal/event/handler"
 	"github.com/fabioods/fc-ms-wallet/internal/usecase/create_account"
 	"github.com/fabioods/fc-ms-wallet/internal/usecase/create_client"
 	"github.com/fabioods/fc-ms-wallet/internal/usecase/create_transaction"
 	"github.com/fabioods/fc-ms-wallet/internal/web"
 	"github.com/fabioods/fc-ms-wallet/internal/web/webserver"
 	"github.com/fabioods/fc-ms-wallet/pkg/events"
+	"github.com/fabioods/fc-ms-wallet/pkg/kafka"
 	"github.com/fabioods/fc-ms-wallet/pkg/uow"
 	_ "github.com/go-sql-driver/mysql"
 	"net/http"
@@ -32,16 +35,16 @@ func main() {
 	}
 	fmt.Println("Connected to database")
 
-	//configMap := ckafka.ConfigMap{
-	//	"bootstrap.servers": "kafka:29092",
-	//	"group.id":          "wallet",
-	//}
-	//kafkaProducer := kafka.NewKafkaProducer(&configMap)
-	//fmt.Println("Connected to kafka")
+	configMap := ckafka.ConfigMap{
+		"bootstrap.servers": "kafka:29092",
+		"group.id":          "wallet",
+	}
+	kafkaProducer := kafka.NewKafkaProducer(&configMap)
+	fmt.Println("Connected to kafka")
 
 	eventDispatcher := events.NewEventDispatcher()
-	//eventDispatcher.Register("transaction_created", handler.NewTransactionCreatedKafka(kafkaProducer))
-	//eventDispatcher.Register("balance_updated", handler.NewBalanceUpdatedKafka(kafkaProducer))
+	eventDispatcher.Register("transaction_created", handler.NewTransactionCreatedKafka(kafkaProducer))
+	eventDispatcher.Register("balance_updated", handler.NewBalanceUpdatedKafka(kafkaProducer))
 	transactionCreatedEvent := event.NewTransactionCreated()
 	balanceUpdatedEvent := event.NewBalanceUpdated()
 
@@ -67,7 +70,7 @@ func main() {
 
 	fmt.Println("Use cases created")
 
-	webServer := webserver.NewWebServer(":8080")
+	webServer := webserver.NewWebServer("0.0.0.0:8080")
 
 	fmt.Println("Web server created")
 
