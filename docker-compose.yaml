@@ -1,14 +1,16 @@
 version: '3'
 services:
-  goapp:
+  wallet:
     build: .
     platform: linux/amd64
-    volumes:
-      - .:/app
+    container_name: wallet
     ports:
       - "8080:8080"
     networks:
-      - wallet
+        - wallet
+    depends_on:
+      - mysql
+      - kafka
 
   mysql:
     image: mysql
@@ -20,22 +22,23 @@ services:
       MYSQL_DATABASE: wallet
     ports:
       - "3306:3306"
-    volumes:
-      - mysql_wallet:/var/lib/mysql
     networks:
       - wallet
+    volumes:
+      - mysql_wallet:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
 
   zookeeper:
     image: "confluentinc/cp-zookeeper:6.1.0"
     container_name: zookeeper
+    networks:
+      - wallet
     ports:
-      - 2181:2181
+      - "2181:2181"
     environment:
       TZ: Sao_Paulo/Brazil
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - wallet
 
   kafka:
     image: "confluentinc/cp-enterprise-kafka:6.1.0"
@@ -46,7 +49,9 @@ services:
       # Exposes 9092 for external connections to the broker
       # Use kafka:29092 for connections internal on the docker network
       # See https://rmoff.net/2018/08/02/kafka-listeners-explained/ for details
-      - '9092:9092'
+      - "9092:9092"
+    networks:
+      - wallet
     environment:
       TZ: Sao_Paulo/Brazil
       KAFKA_BROKER_ID: 1
@@ -60,8 +65,6 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
       CONFLUENT_METRICS_ENABLE: 'false'
-    networks:
-      - wallet
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:7.3.0
@@ -69,6 +72,8 @@ services:
     container_name: control-center
     depends_on:
       - kafka
+    networks:
+      - wallet
     ports:
       - "9021:9021"
     environment:
@@ -78,14 +83,12 @@ services:
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONFLUENT_METRICS_TOPIC_REPLICATION: 1
       PORT: 9021
-    networks:
-      - wallet
-
 
 volumes:
   mysql_wallet:
 networks:
-    wallet:
-        driver: bridge
+  wallet:
+    driver: bridge
+
 
 
